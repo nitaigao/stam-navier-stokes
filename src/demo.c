@@ -220,24 +220,27 @@ static void get_from_UI ( float * d, float * u, float * v )
 static void keyCallback(int key, int action)
 //static void key_func ( unsigned char key, int x, int y )
 {
-	switch ( key )
-	{
-		case 'c':
-		case 'C':
-			clear_data ();
-			break;
+  if (action == GLFW_PRESS) {
+    switch ( key )
+    {
+    case 'c':
+    case 'C':
+      clear_data ();
+      break;
 
-		case 'q':
-		case 'Q':
-			free_data ();
-			exit ( 0 );
-			break;
+    case GLFW_KEY_ESC:
+    case 'q':
+    case 'Q':
+      free_data ();
+      exit ( 0 );
+      break;
 
-		case 'v':
-		case 'V':
-			dvel = !dvel;
-			break;
-	}
+    case 'v':
+    case 'V':
+      dvel = !dvel;
+      break;
+    }
+  }
 }
 
 static void mouse_func ( int button, int state, int x, int y )
@@ -245,7 +248,7 @@ static void mouse_func ( int button, int state, int x, int y )
 	omx = mx = x;
 	omx = my = y;
 
-	//mouse_down[button] = state == GLUT_DOWN;
+	mouse_down[button] = state == 1;
 }
 
 static void motion_func ( int x, int y )
@@ -266,7 +269,7 @@ static void reshape_func ( int width, int height )
 static void idle_func ( void )
 {
 	get_from_UI ( dens_prev, u_prev, v_prev );
-	vel_step ( N, u, v, u_prev, v_prev, visc, dt );
+	//vel_step ( N, u, v, u_prev, v_prev, visc, dt );
 	dens_step ( N, dens, dens_prev, u, v, diff, dt );
 
 // 	glutSetWindow ( win_id );
@@ -293,8 +296,15 @@ static void display_func ( void )
 static void open_glut_window ( void )
 {
 
+  if(!glfwOpenWindow(win_x, win_y, 0, 0, 0, 0, 0, 0, GLFW_WINDOW)) {
+    fprintf(stderr, "Failed to open GLFW window\n");
+    glfwTerminate();
+    exit(0);
+  }
 
-
+  glfwSetKeyCallback(keyCallback);
+  glfwSetWindowTitle("Fluid Simulation - Navier Stokes");
+  glfwSwapInterval(1);
 
 // 	glutInitDisplayMode ( GLUT_RGBA | GLUT_DOUBLE );
 // 
@@ -322,14 +332,23 @@ void mouse() {
 	if (glfwGetMouseButton(GLFW_MOUSE_BUTTON_LEFT)) {
     int mx, my;
 		glfwGetMousePos(&mx, &my);
-		mouse_func(0, 0, mx, my);
+		mouse_func(0, 1, mx, my);
+  }
+  else
+  {
+    mouse_func(0, 0, mx, my);
   }
 
   if (glfwGetMouseButton(GLFW_MOUSE_BUTTON_RIGHT)) {
 		int mx, my;
 		glfwGetMousePos(&mx, &my);
-		motion_func(mx, my);
+    mouse_func(2, 1, mx, my);
+		//motion_func(mx, my);
 	}
+  else
+  {
+    mouse_func(2, 0, mx, my);
+  }
 }
 
 
@@ -348,21 +367,14 @@ int main ( int argc, char ** argv )
     return EXIT_FAILURE;
   }
  
-  if(!glfwOpenWindow(1024, 768, 0, 0, 0, 0, 0, 0, GLFW_WINDOW)) {
-    fprintf(stderr, "Failed to open GLFW window\n");
-    glfwTerminate();
-    return EXIT_FAILURE;
-  }
+  
 
 // 	GLenum err = glewInit();
 //   if (GLEW_OK != err) {
 //     fprintf(stderr, "Error: %s\n", glewGetErrorString(err));
 //   }
   
-  
-  glfwSetKeyCallback(keyCallback);
-  glfwSetWindowTitle("Fluid Simulation - Navier Stokes");
-  glfwSwapInterval(1);
+ 
 
 	if ( argc != 1 && argc != 6 ) {
 		fprintf ( stderr, "usage : %s N dt diff visc force source\n", argv[0] );
