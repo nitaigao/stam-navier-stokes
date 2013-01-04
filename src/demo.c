@@ -124,9 +124,10 @@ static void post_display ( void )
 static void draw_velocity ( void )
 {
 	int i, j;
-	float x, y, h;
+	float x, y, h, linescale;
 
 	h = 1.0f/N;
+  linescale = 0.2f;;
 
 	glColor3f ( 1.0f, 1.0f, 1.0f );
 	glLineWidth ( 1.0f );
@@ -138,8 +139,10 @@ static void draw_velocity ( void )
 			for ( j=1 ; j<=N ; j++ ) {
 				y = (j-0.5f)*h;
 
+        
+
 				glVertex2f ( x, y );
-				glVertex2f ( x+u[IX(i,j)], y+v[IX(i,j)] );
+				glVertex2f ( x+(u[IX(i,j)]*linescale), y+(v[IX(i,j)]*linescale) );
 			}
 		}
 
@@ -237,7 +240,10 @@ static void keyCallback(int key, int action)
 
     case 'v':
     case 'V':
-      dvel = !dvel;
+      dvel++;
+      if (dvel > 2) {
+        dvel = 0;
+      }
       break;
     }
   }
@@ -269,7 +275,7 @@ static void reshape_func ( int width, int height )
 static void idle_func ( void )
 {
 	get_from_UI ( dens_prev, u_prev, v_prev );
-	//vel_step ( N, u, v, u_prev, v_prev, visc, dt );
+	vel_step ( N, u, v, u_prev, v_prev, visc, dt );
 	dens_step ( N, dens, dens_prev, u, v, diff, dt );
 
 // 	glutSetWindow ( win_id );
@@ -280,8 +286,12 @@ static void display_func ( void )
 {
 	pre_display ();
 
-		if ( dvel ) draw_velocity ();
-		else		draw_density ();
+		if ( dvel == 1 ) draw_velocity ();
+		else if (dvel == 0)		draw_density ();
+    else if (dvel == 2) {
+      draw_density ();
+      draw_velocity ();
+    }
 
 	post_display ();
 }
@@ -413,7 +423,7 @@ int main ( int argc, char ** argv )
 	printf ( "\t Clear the simulation by pressing the 'c' key\n" );
 	printf ( "\t Quit by pressing the 'q' key\n" );
 
-	dvel = 0;
+	dvel = 2;
 
 	if ( !allocate_data () ) exit ( 1 );
 	clear_data ();
@@ -426,6 +436,10 @@ int main ( int argc, char ** argv )
 		idle_func();
 		display_func();
 		mouse();
+
+    if (!glfwGetWindowParam(GLFW_OPENED)) {
+      exit(0);
+    }
 	}
 
 	glfwTerminate();
